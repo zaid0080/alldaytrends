@@ -6,6 +6,7 @@ import { FiSun, FiMoon, FiMenu, FiX } from 'react-icons/fi'
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import CountrySearch from './CountrySearch'
+import Image from 'next/image'
 
 export default function Header() {
   const { isDark, toggleTheme } = useTheme()
@@ -22,9 +23,26 @@ export default function Header() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center">
-            <span className="text-2xl font-bold text-indigo-600 dark:text-indigo-400 transition-colors">
-              AllDayTrends
-            </span>
+            {/* Desktop Logo - hidden on mobile */}
+            <div className="hidden md:block">
+              <Image 
+                src="/logoTag.png" // replace with your desktop logo path
+                alt="AllDayTrends Logo"
+                width={180}
+                height={40}
+                className="h-10 w-auto"
+              />
+            </div>
+            {/* Mobile Logo - hidden on desktop */}
+            <div className="md:hidden">
+              <Image 
+                src="/ADT.png" // replace with your mobile logo path
+                alt="AllDayTrends Logo"
+                width={120}
+                height={40}
+                className="h-8 w-auto"
+              />
+            </div>
           </Link>
 
           {/* Desktop Navigation */}
@@ -41,12 +59,16 @@ export default function Header() {
             >
               About
             </Link>
-            
           </nav>
 
           {/* Theme Toggle and Mobile Menu Button */}
           <div className="flex items-center space-x-4">
-            <CountrySearch />
+            <div className="hidden md:block">
+              <CountrySearch />
+            </div>
+            <div className="md:hidden">
+              <CountrySearch />
+            </div>
             <motion.button
               onClick={toggleTheme}
               whileTap={{ scale: 0.9 }}
