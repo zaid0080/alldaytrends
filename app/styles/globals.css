@@ -1,0 +1,13 @@
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities;
+@layer utilities {
+    .text-balance {
+      text-wrap: balance;
+    }
+    /* Prevents CLS */
+    .bg-primary {
+      @apply bg-gray-50 dark:bg-gray-900;
+    }
+  } */
+/* Add any additional global styles here */
