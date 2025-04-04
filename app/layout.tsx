@@ -4,6 +4,7 @@ import { ThemeProvider } from '@/context/ThemeContext'
 import './globals.css'
 import Header from './components/Header'
 import Footer from './components/Footer'
+import FeedbackButton from '@/components/FeedbackButton' // Add this import
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -60,6 +61,7 @@ export default function RootLayout({
             {children}
           </main>
           <Footer />
+          <FeedbackButton /> {/* Add this component here */}
         </ThemeProvider>
       </body>
     </html>

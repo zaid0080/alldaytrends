@@ -23,12 +23,13 @@ export default function TrendsPage() {
       <TrendContainer title="Historical Trends">
         <div className="space-y-8">
         <TimelineSelector onTimeSelect={handleTimeSelect} />
-          <BaseTrendList 
-            trends={trends}
-            loading={loading}
-            error={error}
-            variant="detailed"
-          />
+        <BaseTrendList 
+  trends={trends}
+  loading={loading}
+  error={error}
+  variant="detailed"
+  skeletonCount={6} // Add skeleton loading states
+/>
         </div>
       </TrendContainer>
     </main>
