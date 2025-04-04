@@ -31,7 +31,7 @@ export default function Header() {
                 width={180}
                 height={40}
                 className="h-10 w-auto"
-              />
+              /> 
             </div>
             {/* Mobile Logo - hidden on desktop */}
             <div className="md:hidden">
