@@ -11,8 +11,6 @@ interface Country {
   country: string // Country name
 }
 
-
-
 export default function CountrySearch() {
   const [isOpen, setIsOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -21,62 +19,60 @@ export default function CountrySearch() {
   const [isLoading, setIsLoading] = useState(false)
   const modalRef = useRef<HTMLDivElement>(null)
 
-// Load countries and detect user's location
-useEffect(() => {
-  const initializeCountry = async () => {
-    setIsLoading(true)
-    try {
-      // First load the country data
-      const formattedCountries = countriesData.map(country => ({
-        code: country.countryCode ?? '', // Fallback to an empty string if null
-        name: country.name,
-        woeid: country.woeid,
-        country: country.country
-      }))
-      setCountries(formattedCountries)
-
-      // Try to detect user's country
+  useEffect(() => {
+    const loadCountries = async () => {
       try {
-        const resp = await fetch("https://ipapi.co/json/")
-        const data = await resp.json()
-        const userCountryName = data.country_name
-        
-        // Find matching country in our data
-        const matchedCountry = formattedCountries.find(c => 
-          c.name.toLowerCase() === userCountryName.toLowerCase()
-        )
-        
-        if (matchedCountry) {
-          setSelectedCountry(matchedCountry)
-          sessionStorage.setItem("country", JSON.stringify(matchedCountry))
+        const formattedCountries = countriesData.map(country => ({
+          code: country.countryCode ?? '',
+          name: country.name,
+          woeid: country.woeid,
+          country: country.country
+        }));
+        setCountries(formattedCountries); // Always load countries first
+  
+        // Now check sessionStorage
+        const savedCountry = sessionStorage.getItem("country");
+        if (savedCountry) {
+          try {
+            const parsedCountry = JSON.parse(savedCountry);
+            // Validate the saved country exists in our data
+            const isValid = formattedCountries.some(c => c.woeid === parsedCountry.woeid);
+            setSelectedCountry(isValid ? parsedCountry : formattedCountries[0]);
+          } catch {
+            setSelectedCountry(formattedCountries[0]);
+          }
         } else {
-          setSelectedCountry(formattedCountries[0]) // Fallback to first country
+          // Only detect location if no saved country
+          await detectUserLocation(formattedCountries);
         }
-      } catch (ipError) {
-        console.error('IP detection failed:', ipError)
-        setSelectedCountry(formattedCountries[0]) // Fallback to first country
+      } catch (error) {
+        console.error('Failed to load countries:', error);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Failed to load countries:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  // Check sessionStorage first
-  const savedCountry = sessionStorage.getItem("country")
-  if (savedCountry) {
-    try {
-      const parsedCountry = JSON.parse(savedCountry)
-      setSelectedCountry(parsedCountry)
-      setIsLoading(false)
-    } catch {
-      initializeCountry()
-    }
-  } else {
-    initializeCountry()
-  }
-}, [])
+    };
+  
+    const detectUserLocation = async (countriesList: Country[]) => {
+      try {
+        const resp = await fetch("https://ipapi.co/json/");
+        const data = await resp.json();
+        const userCountryName = data.country_name;
+        
+        const matchedCountry = countriesList.find(c => 
+          c.name.toLowerCase() === userCountryName.toLowerCase()
+        );
+        
+        setSelectedCountry(matchedCountry || countriesList[0]);
+        sessionStorage.setItem("country", JSON.stringify(matchedCountry || countriesList[0]));
+      } catch (error) {
+        console.error('Location detection failed:', error);
+        setSelectedCountry(countriesList[0]);
+      }
+    };
+  
+    setIsLoading(true);
+    loadCountries();
+  }, []);
 
   // Click outside handler
   useEffect(() => {

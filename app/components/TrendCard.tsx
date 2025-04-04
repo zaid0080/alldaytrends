@@ -27,13 +27,17 @@ export default function TrendCard({ trend, rank }: TrendCardProps) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '0px 0px -50px 0px' }}
-      transition={{ duration: 0.3 }}
-      whileHover={{ y: -3 }}
-      className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200"
-    >
+  initial={{ opacity: 0, y: 10 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  viewport={{ 
+    once: false, // Changed from true to false
+    margin: '100px 0px 100px 0px', // Increased margin
+    amount: 'some' // Add this to trigger when any part is visible
+  }}
+  transition={{ duration: 0.3 }}
+  whileHover={{ y: -3 }}
+  className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200"
+>
       <div className="p-6">
         <div className="flex items-start justify-between">
           <div className={`w-8 h-8 rounded-lg bg-gradient-to-r ${getRankColor()} 

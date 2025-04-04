@@ -6,28 +6,32 @@ import TrendCard from '@/components/TrendCard'
 import LoadingSkeleton from '@/components/LoadingSkeleton'
 
 interface BaseTrendListProps {
-  trends?: Trend[]       // New prop for controlled usage
-  initialTrends?: Trend[] // Legacy prop for backward compatibility
+  trends?: Trend[]
+  initialTrends?: Trend[]
   variant?: 'home' | 'detailed'
   loading?: boolean
   error?: string | null
   testId?: string
+  skeletonCount?: number // Add this prop
 }
 
 export default function BaseTrendList({ 
-  trends: propTrends,      // Get trends from props
-  initialTrends = [],      // Fallback for legacy usage
+  trends: propTrends,
+  initialTrends = [],
   variant = 'home',
-  testId = 'trend-list'
+  loading = false, // Make sure this is properly passed
+  error = null,
+  testId = 'trend-list',
+  skeletonCount = variant === 'home' ? 3 : 6 // Default values
 }: BaseTrendListProps) {
   const [trends, setTrends] = useState<Trend[]>(initialTrends)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [internalLoading, setInternalLoading] = useState(false)
 
   useEffect(() => {
-    // Only fetch updates if we have no initial data
-    if (initialTrends.length === 0) {
-      setLoading(true)
+    if (propTrends) {
+      setTrends(propTrends)
+    } else if (initialTrends.length === 0) {
+      setInternalLoading(true)
       fetch('/api/trends')
         .then(res => {
           if (!res.ok) throw new Error('Failed to fetch trends')
@@ -37,10 +41,12 @@ export default function BaseTrendList({
           if (!data.trends) throw new Error('Invalid response format')
           setTrends(data.trends)
         })
-        .catch(err => setError(err.message))
-        .finally(() => setLoading(false))
+        .catch(err => error || setError(err.message))
+        .finally(() => setInternalLoading(false))
     }
-  }, [initialTrends.length])
+  }, [propTrends, initialTrends.length, error])
+
+  const isLoading = loading || internalLoading
 
   if (error) {
     return (
@@ -62,21 +68,23 @@ export default function BaseTrendList({
       }`}
       data-testid={testId}
     >
-      {loading ? (
-        <LoadingSkeleton 
-          count={variant === 'home' ? 3 : 6} 
-          // Removed testId as it is not supported by LoadingSkeleton
-        />
+      {isLoading ? (
+        Array.from({ length: skeletonCount }).map((_, i) => (
+          <LoadingSkeleton key={`skeleton-${i}`} />
+        ))
       ) : (
         trends.map((trend, index) => (
           <TrendCard 
-            key={trend.id} 
+            key={`${trend.id}-${index}`} 
             trend={{ ...trend, tweetVolume: trend.tweetVolume ?? 0 }}
             rank={index + 1}
-            // Removed testId as it is not supported by TrendCard
           />
         ))
       )}
     </div>
   )
+}
+
+function setError(message: any): any {
+  throw new Error('Function not implemented.')
 }

@@ -17,7 +17,7 @@ export default function Header() {
       initial={{ y: -20 }}
       animate={{ y: 0 }}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-      className="bg-white dark:bg-gray-800 shadow-sm fixed w-full top-0 z-50 transition-colors duration-200"
+      className="bg-white dark:bg-gray-800 shadow-lg dark:shadow-sm fixed w-full top-0 z-50 transition-colors duration-200 border-b border-gray-200 dark:border-gray-700"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
@@ -25,18 +25,18 @@ export default function Header() {
           <Link href="/" className="flex items-center">
             {/* Desktop Logo - hidden on mobile */}
             <div className="hidden md:block">
-              <Image 
-                src="/logoTag.png" // replace with your desktop logo path
+              <Image
+                src="/logoTag.png"
                 alt="AllDayTrends Logo"
                 width={180}
                 height={40}
                 className="h-10 w-auto"
-              /> 
+              />
             </div>
             {/* Mobile Logo - hidden on desktop */}
             <div className="md:hidden">
-              <Image 
-                src="/ADT.png" // replace with your mobile logo path
+              <Image
+                src="/ADT.png"
                 alt="AllDayTrends Logo"
                 width={120}
                 height={40}
@@ -46,18 +46,24 @@ export default function Header() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-8">
+          <nav className="hidden md:flex space-x-6">
             <Link
               href="/trends"
-              className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-200"
+              className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-2 py-1 transition-colors duration-200 text-sm font-medium"
             >
               Trends
             </Link>
             <Link
               href="/about"
-              className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-200"
+              className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-2 py-1 transition-colors duration-200 text-sm font-medium"
             >
               About
+            </Link>
+            <Link
+              href="/faq"
+              className="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-2 py-1 transition-colors duration-200 text-sm font-medium"
+            >
+              FAQ
             </Link>
           </nav>
 
@@ -113,6 +119,13 @@ export default function Header() {
                 onClick={() => setIsMenuOpen(false)}
               >
                 About
+              </Link>
+              <Link
+                href="/faq"
+                className="px-3 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors duration-200"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                FAQ
               </Link>
             </nav>
           </div>
