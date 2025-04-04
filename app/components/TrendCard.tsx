@@ -17,7 +17,7 @@ interface TrendCardProps {
 
 export default function TrendCard({ trend, rank }: TrendCardProps) {
   const getRankColor = () => {
-    switch(rank) {
+    switch (rank) {
       case 1: return 'from-yellow-400 to-amber-500'
       case 2: return 'from-gray-400 to-slate-500'
       case 3: return 'from-amber-600 to-orange-500'
@@ -27,17 +27,17 @@ export default function TrendCard({ trend, rank }: TrendCardProps) {
 
   return (
     <motion.div
-  initial={{ opacity: 0, y: 10 }}
-  whileInView={{ opacity: 1, y: 0 }}
-  viewport={{ 
-    once: false, // Changed from true to false
-    margin: '100px 0px 100px 0px', // Increased margin
-    amount: 'some' // Add this to trigger when any part is visible
-  }}
-  transition={{ duration: 0.3 }}
-  whileHover={{ y: -3 }}
-  className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200"
->
+    initial={{ opacity: 0, y: 10 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ 
+      once: true, // Only animate once
+      margin: '0px 0px -50px 0px', // Slight bottom margin buffer
+      amount: 0.3 // Trigger when 30% visible
+    }}
+    // Keep hover and other interactions
+    whileHover={{ y: -3 }}
+      className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200"
+    >
       <div className="p-6">
         <div className="flex items-start justify-between">
           <div className={`w-8 h-8 rounded-lg bg-gradient-to-r ${getRankColor()} 
@@ -57,7 +57,7 @@ export default function TrendCard({ trend, rank }: TrendCardProps) {
               {trend.mentions.toLocaleString()}
             </span>
           </div>
-          
+
           <div className="flex justify-between text-sm py-2 px-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
             <span className="text-gray-600 dark:text-gray-400">Tweet Volume:</span>
             <span className="font-medium text-gray-800 dark:text-gray-200">
