@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { FiSearch, FiX, FiChevronDown } from 'react-icons/fi'
 import countriesData from '@/data/countries.json'
 import Head from 'next/head'
+import { useRouter } from 'next/navigation'
 
 interface Country {
   code: string
@@ -19,6 +20,25 @@ export default function CountrySearch() {
   const [countries, setCountries] = useState<Country[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const modalRef = useRef<HTMLDivElement>(null)
+
+  const router = useRouter();
+
+  const handleSelect = (selectedItem: Country) => {
+    sessionStorage.setItem("country", JSON.stringify(selectedItem));
+
+    // Check if the selected item is a country or a city
+    const isCountry = selectedItem.name === selectedItem.country;
+
+    if (isCountry) {
+      router.push(`/${encodeURIComponent(selectedItem.name.toLowerCase())}`);
+    } else {
+      router.push(`/${encodeURIComponent(selectedItem.country.toLowerCase())}/${encodeURIComponent(selectedItem.name.toLowerCase())}`);
+    }
+
+    setIsOpen(false);
+    setSelectedCountry(selectedItem);
+    setSearchTerm('');
+  };
 
   useEffect(() => {
     const loadCountries = async () => {
@@ -197,11 +217,7 @@ export default function CountrySearch() {
                           hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors 
                           ${selectedCountry?.woeid === country.woeid ? 'bg-indigo-50 dark:bg-indigo-900/30' : ''}
                         `}
-                          onClick={() => {
-                            setSelectedCountry(country)
-                            setIsOpen(false)
-                            setSearchTerm('')
-                          }}
+                          onClick={() => handleSelect(country)}
                         >
                           <div className="flex items-center gap-2 md:gap-3">
                             <div
