@@ -1,5 +1,6 @@
 import { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
+import { SpeedInsights } from "@vercel/speed-insights/next"
 import { ThemeProvider } from '@/context/ThemeContext'
 import './globals.css'
 import Header from './components/Header'
@@ -59,6 +60,7 @@ export default function RootLayout({
           <Header />
           <main className="mt-16">
             {children}
+            <SpeedInsights />
           </main>
           <Footer />
           <FeedbackButton /> {/* Add this component here */}
