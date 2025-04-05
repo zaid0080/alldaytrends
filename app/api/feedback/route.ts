@@ -14,7 +14,11 @@ export async function POST(request: Request) {
     }
 
     // Store in Google Sheets (using API Spreadsheets)
-    const sheetResponse = await fetch('https://api.apispreadsheets.com/data/6foRyHRgFnFQO3Yj/', {
+    if (!process.env.NEXT_PUBLIC_API_SPREADSHEETS_URL) {
+      throw new Error('NEXT_PUBLIC_API_SPREADSHEETS_URL is not defined')
+    }
+
+    const sheetResponse = await fetch(process.env.NEXT_PUBLIC_API_SPREADSHEETS_URL, {
       method: 'POST',
       body: JSON.stringify({
         data: { name, email, feedback, timestamp: new Date().toISOString() }
