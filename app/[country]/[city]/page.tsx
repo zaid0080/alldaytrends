@@ -14,11 +14,12 @@ async function getTrends(place: string) {
   }
 }
 
-export default async function CityPage({ 
-  params 
-}: { 
-  params: { country: string; city: string }
-}) {
+export default async function CityPage(
+  props: { 
+    params: Promise<{ country: string; city: string }>
+  }
+) {
+  const params = await props.params;
   if (!params?.country || !params?.city) {
     return notFound()
   }
@@ -28,12 +29,12 @@ export default async function CityPage({
   const city = decodeRouteParam(params.city)
   const location = `${country}/${city}`
   const { trends } = await getTrends(location)
-  
+
   return (
     <CountryPage
-      params={{ 
+      params={Promise.resolve({ 
         country: location // Pass the full location path
-      }}
+      })}
       trends={trends} // Pass trends as a separate prop
     />
   )

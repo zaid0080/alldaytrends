@@ -18,12 +18,13 @@ async function getTrends(place: string) {
   }
 }
 
-export default async function CountryPage({
-    params,
-}: {
-    params: { country: string },
-    trends: any
-}) {
+export default async function CountryPage(
+  props: {
+      params: Promise<{ country: string }>,
+      trends: any
+  }
+) {
+  const params = await props.params;
   // First validate params exists
   if (!params?.country) {
     return notFound()
@@ -31,7 +32,7 @@ export default async function CountryPage({
 
   // Then decode the parameter
   const country = decodeRouteParam(params.country)
-  
+
   // Fetch data
   const { trends } = await getTrends(country)
 
