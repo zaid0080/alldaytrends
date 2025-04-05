@@ -42,7 +42,7 @@ export default function AboutPage() {
         
         <div className="mb-8 mx-auto w-full max-w-md">
           <Image
-            src="Trends.svg"
+            src="/Trends.avif"
             alt="Twitter Trends Analysis Illustration"
             width={500}
             height={300}

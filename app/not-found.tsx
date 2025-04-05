@@ -9,7 +9,7 @@ export default function NotFound() {
         {/* Error Image */}
         <div className="mx-auto w-full max-w-xs">
           <Image
-            src="/404Error.png"
+            src="/404Error.avif"
             alt="404 Error"
             width={500}
             height={350}
