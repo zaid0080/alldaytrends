@@ -47,7 +47,6 @@ export default async function CountryPage(
       </AnimationWrapper>
       <TrendContainer
         title={`Trends in ${country}`}
-        headerAction={<CountrySearch />}
       >
         <BaseTrendList
           initialTrends={trends}

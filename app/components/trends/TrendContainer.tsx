@@ -6,7 +6,6 @@ import { ReactNode } from 'react'
 interface TrendContainerProps {
   title: string
   children: ReactNode
-  headerAction?: ReactNode
   fullWidth?: boolean
   background?: string
 }
@@ -14,7 +13,6 @@ interface TrendContainerProps {
 export default function TrendContainer({
   title,
   children,
-  headerAction,
   fullWidth = false,
   background = 'bg-white dark:bg-gray-900'
 }: TrendContainerProps) {
@@ -24,7 +22,6 @@ export default function TrendContainer({
         <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
           {title}
         </h2>
-        {headerAction}
       </div>
       {children}
     </div>
