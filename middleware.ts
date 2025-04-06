@@ -1,33 +1,35 @@
 // middleware.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { getLocationFromIP } from '@/lib/geolocation';
+import { NextRequest, NextResponse } from 'next/server'
+import { getLocationFromIP } from '@/lib/geolocation'
 
 export async function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname !== '/') return;
+  const path = request.nextUrl.pathname
+  
+  // Only process root requests
+  if (path !== '/') return NextResponse.next()
 
   try {
-    const detectedCountry = await getLocationFromIP(request) || 'worldwide';
-    const url = request.nextUrl.clone();
-    url.pathname = `/${detectedCountry.toLowerCase()}`;
+    const detectedCountry = (await getLocationFromIP(request)) || 'worldwide'
+    const normalizedCountry = detectedCountry.toLowerCase()
 
-    const response = NextResponse.redirect(url);
+    // Always redirect to country path
+    const url = request.nextUrl.clone()
+    url.pathname = `/${normalizedCountry}`
     
-    // Set cookie for client-side consistency
-    response.cookies.set('geo-country', detectedCountry, {
-      maxAge: 60 * 60, // 1 hour
+    const response = NextResponse.redirect(url)
+    response.cookies.set('geo-country', normalizedCountry, {
+      maxAge: 60 * 60,
       path: '/',
       sameSite: 'lax'
-    });
+    })
+    
+    return response
 
-    return response;
   } catch (error) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/worldwide';
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(new URL('/worldwide', request.url))
   }
 }
 
 export const config = {
   matcher: '/',
-  runtime: 'experimental-edge',
-};
+}

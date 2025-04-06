@@ -23,20 +23,56 @@ export default function CountrySearch() {
 
   const router = useRouter()
 
-  const handleSelect = (selectedItem: Country) => {
-    sessionStorage.setItem("country", JSON.stringify(selectedItem))
-    document.cookie = `geo-country=${encodeURIComponent(selectedItem.name.toLowerCase())}; max-age=${60 * 60}; path=/`
+  useEffect(() => {
+    const syncWithURL = () => {
+      const countryFromURL = window.location.pathname.split('/')[1];
+      if (countryFromURL && countries.length > 0) {
+        const matched = countries.find(c => 
+          c.name.toLowerCase() === decodeURIComponent(countryFromURL).toLowerCase()
+        );
+        if (matched) setSelectedCountry(matched);
+      }
+    };
+  
+    // Sync when countries load or URL changes
+    syncWithURL();
+    window.addEventListener('popstate', syncWithURL);
+    return () => window.removeEventListener('popstate', syncWithURL);
+  }, [countries]);
 
-    const isCountry = selectedItem.name === selectedItem.country
-    const path = isCountry 
-      ? `/${selectedItem.name.toLowerCase()}`
-      : `/${selectedItem.country.toLowerCase()}/${selectedItem.name.toLowerCase()}`
-    
-    router.push(path)
-    setIsOpen(false)
-    setSelectedCountry(selectedItem)
-    setSearchTerm('')
-  }
+  const handleSelect = (selectedItem: Country) => {
+    const isWorldwide = selectedItem.name === "Worldwide";
+    const isCountry = selectedItem.name === selectedItem.country;
+  
+    // Build the path with proper encoding
+    const path = isWorldwide
+      ? '/worldwide'
+      : isCountry
+        ? `/${encodeURIComponent(selectedItem.name.toLowerCase())}`
+        : `/${encodeURIComponent(selectedItem.country.toLowerCase())}/${encodeURIComponent(selectedItem.name.toLowerCase())}`;
+  
+    // Update storage and cookie
+    try {
+      sessionStorage.setItem("country", JSON.stringify(selectedItem));
+      document.cookie = `geo-country=${encodeURIComponent(
+        isWorldwide ? 'worldwide' : selectedItem.name.toLowerCase()
+      )}; max-age=${60 * 60}; path=/`;
+    } catch (error) {
+      console.error('Failed to save location:', error);
+    }
+  
+    // Handle worldwide specially with full reload
+    if (isWorldwide) {
+      window.location.href = path;
+      return;
+    }
+  
+    // Optimized navigation for countries/cities
+    router.push(path, { scroll: false });
+    setIsOpen(false);
+    setSelectedCountry(selectedItem);
+    setSearchTerm('');
+  };
 
   // Extract country from cookie
   const getCountryFromCookie = () => {
@@ -46,41 +82,22 @@ export default function CountrySearch() {
     return cookie ? decodeURIComponent(cookie.split('=')[1]) : null
   }
 
-  // Improved geolocation detection
   const detectUserLocation = async (countriesList: Country[]) => {
     try {
-      // 1. Check cookie first (set by middleware)
-      const cookieCountry = getCountryFromCookie()
+      // Try cookie first
+      const cookieCountry = getCountryFromCookie();
       if (cookieCountry) {
-        const matched = countriesList.find(c => 
-          c.name.toLowerCase() === cookieCountry.toLowerCase()
-        )
-        if (matched) return matched
+        return countriesList.find(c => c.name.toLowerCase() === cookieCountry.toLowerCase()) || countriesList[0];
       }
-
-      // 2. Check session storage
-      const savedCountry = sessionStorage.getItem("country")
-      if (savedCountry) {
-        try {
-          const parsed = JSON.parse(savedCountry)
-          if (countriesList.some(c => c.woeid === parsed.woeid)) {
-            return parsed
-          }
-        } catch {}
-      }
-
-      // 3. Fallback to API detection
-      const response = await fetch('/api/geolocation')
-      const countryName = await response.json()
-      return countriesList.find(c => 
-        c.name.toLowerCase() === countryName?.toLowerCase()
-      ) || countriesList[0]
-      
-    } catch (error) {
-      console.error('Location detection failed:', error)
-      return countriesList[0]
+  
+      // Fallback to API
+      const response = await fetch('/api/geolocation');
+      const countryName = await response.json();
+      return countriesList.find(c => c.name.toLowerCase() === countryName?.toLowerCase()) || countriesList[0];
+    } catch {
+      return countriesList[0];
     }
-  }
+  };
 
   useEffect(() => {
     const loadCountries = async () => {
