@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { FiSearch, FiX, FiChevronDown } from 'react-icons/fi'
 import countriesData from '@/data/countries.json'
 import Head from 'next/head'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 
 interface Country {
   code: string
@@ -22,35 +22,33 @@ export default function CountrySearch() {
   const modalRef = useRef<HTMLDivElement>(null)
 
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
-    const syncWithURL = () => {
-      const countryFromURL = window.location.pathname.split('/')[1];
-      if (countryFromURL && countries.length > 0) {
-        const matched = countries.find(c => 
-          c.name.toLowerCase() === decodeURIComponent(countryFromURL).toLowerCase()
-        );
-        if (matched) setSelectedCountry(matched);
-      }
-    };
-  
-    // Sync when countries load or URL changes
-    syncWithURL();
-    window.addEventListener('popstate', syncWithURL);
-    return () => window.removeEventListener('popstate', syncWithURL);
-  }, [countries]);
+    const countryFromURL = pathname.split('/')[1];
+    if (countryFromURL && countries.length > 0) {
+      const matched = countries.find(c =>
+        c.name.toLowerCase() === decodeURIComponent(countryFromURL).toLowerCase()
+      );
+      if (matched) setSelectedCountry(matched);
+    } else if (countries.length > 0) {
+      // Default to Worldwide when on homepage
+      const worldwide = countries.find(c => c.name === "Worldwide");
+      if (worldwide) setSelectedCountry(worldwide);
+    }
+  }, [pathname, countries]);
 
   const handleSelect = (selectedItem: Country) => {
     const isWorldwide = selectedItem.name === "Worldwide";
     const isCountry = selectedItem.name === selectedItem.country;
-  
+
     // Build the path with proper encoding
     const path = isWorldwide
       ? '/worldwide'
       : isCountry
         ? `/${encodeURIComponent(selectedItem.name.toLowerCase())}`
         : `/${encodeURIComponent(selectedItem.country.toLowerCase())}/${encodeURIComponent(selectedItem.name.toLowerCase())}`;
-  
+
     // Update storage and cookie
     try {
       sessionStorage.setItem("country", JSON.stringify(selectedItem));
@@ -60,13 +58,13 @@ export default function CountrySearch() {
     } catch (error) {
       console.error('Failed to save location:', error);
     }
-  
+
     // Handle worldwide specially with full reload
     if (isWorldwide) {
       window.location.href = path;
       return;
     }
-  
+
     // Optimized navigation for countries/cities
     router.push(path, { scroll: false });
     setIsOpen(false);
@@ -89,7 +87,7 @@ export default function CountrySearch() {
       if (cookieCountry) {
         return countriesList.find(c => c.name.toLowerCase() === cookieCountry.toLowerCase()) || countriesList[0];
       }
-  
+
       // Fallback to API
       const response = await fetch('/api/geolocation');
       const countryName = await response.json();
