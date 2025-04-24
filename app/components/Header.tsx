@@ -26,21 +26,21 @@ export default function Header() {
             {/* Desktop Logo - hidden on mobile */}
             <div className="hidden md:block">
               <Image
-                src="/logoTag.png"
+                src="/website-logo.png"
                 alt="AllDayTrends Logo"
-                width={180}
-                height={40}
-                className="h-10 w-auto"
+                width={200}
+                height={60} 
+                priority 
               />
             </div>
             {/* Mobile Logo - hidden on desktop */}
             <div className="md:hidden">
               <Image
-                src="/ADT.png"
+                src="/website-logo.png"
                 alt="AllDayTrends Logo"
-                width={120}
+                width={140}
                 height={40}
-                className="h-8 w-auto"
+                priority 
               />
             </div>
           </Link>

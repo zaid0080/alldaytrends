@@ -1,7 +1,6 @@
 'use client'
-
-import { FiMinus, FiTrendingDown, FiTrendingUp } from 'react-icons/fi'
 import { motion } from 'framer-motion'
+import { useRouter } from 'next/navigation'
 
 interface Trend {
   id: number
@@ -16,6 +15,8 @@ interface TrendCardProps {
 }
 
 export default function TrendCard({ trend, rank }: TrendCardProps) {
+  const router = useRouter()
+
   const getRankColor = () => {
     switch (rank) {
       case 1: return 'from-yellow-400 to-amber-500'
@@ -26,18 +27,19 @@ export default function TrendCard({ trend, rank }: TrendCardProps) {
   }
 
   return (
-<motion.div
-  initial={{ opacity: 0, y: 10 }}
-  animate={{ opacity: 1, y: 0 }} // Changed from whileInView
-  transition={{ 
-    delay: Math.min(0.1 * rank, 0.3), // Stagger based on rank
-    type: "spring",
-    stiffness: 300,
-    damping: 20
-  }}
-  whileHover={{ y: -3 }}
-  className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200"
->
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{
+        delay: Math.min(0.1 * rank, 0.3),
+        type: "spring",
+        stiffness: 300,
+        damping: 20
+      }}
+      whileHover={{ y: -3 }}
+      className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+      onClick={() => router.push(`/trends/${trend.id}`)}
+    >
       <div className="p-6">
         <div className="flex items-start justify-between">
           <div className={`w-8 h-8 rounded-lg bg-gradient-to-r ${getRankColor()} 

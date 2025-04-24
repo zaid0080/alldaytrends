@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { FiSearch, FiX, FiChevronDown } from 'react-icons/fi'
 import countriesData from '@/data/countries.json'
 import Head from 'next/head'
+import { useRouter, usePathname } from 'next/navigation'
 
 interface Country {
   code: string
@@ -20,60 +21,109 @@ export default function CountrySearch() {
   const [isLoading, setIsLoading] = useState(false)
   const modalRef = useRef<HTMLDivElement>(null)
 
+  const router = useRouter()
+  const pathname = usePathname()
+
+  useEffect(() => {
+    const countryFromURL = pathname.split('/')[1];
+    if (countryFromURL && countries.length > 0) {
+      const matched = countries.find(c =>
+        c.name.toLowerCase() === decodeURIComponent(countryFromURL).toLowerCase()
+      );
+      if (matched) setSelectedCountry(matched);
+    } else if (countries.length > 0) {
+      // Default to Worldwide when on homepage
+      const worldwide = countries.find(c => c.name === "Worldwide");
+      if (worldwide) setSelectedCountry(worldwide);
+    }
+  }, [pathname, countries]);
+
+  const handleSelect = (selectedItem: Country) => {
+    const isWorldwide = selectedItem.name === "Worldwide";
+    const isCountry = selectedItem.name === selectedItem.country;
+
+    // Build the path with proper encoding
+    const path = isWorldwide
+      ? '/worldwide'
+      : isCountry
+        ? `/${encodeURIComponent(selectedItem.name.toLowerCase())}`
+        : `/${encodeURIComponent(selectedItem.country.toLowerCase())}/${encodeURIComponent(selectedItem.name.toLowerCase())}`;
+
+    // Update storage and cookie
+    try {
+      sessionStorage.setItem("country", JSON.stringify(selectedItem));
+      document.cookie = `geo-country=${encodeURIComponent(
+        isWorldwide ? 'worldwide' : selectedItem.name.toLowerCase()
+      )}; max-age=${60 * 60}; path=/`;
+    } catch (error) {
+      console.error('Failed to save location:', error);
+    }
+
+    // Handle worldwide specially with full reload
+    if (isWorldwide) {
+      window.location.href = path;
+      return;
+    }
+
+    // Optimized navigation for countries/cities
+    router.push(path, { scroll: false });
+    setIsOpen(false);
+    setSelectedCountry(selectedItem);
+    setSearchTerm('');
+  };
+
+  // Extract country from cookie
+  const getCountryFromCookie = () => {
+    const cookie = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('geo-country='))
+    return cookie ? decodeURIComponent(cookie.split('=')[1]) : null
+  }
+
+  const detectUserLocation = async (countriesList: Country[]) => {
+    try {
+      // Try cookie first
+      const cookieCountry = getCountryFromCookie();
+      if (cookieCountry) {
+        return countriesList.find(c => c.name.toLowerCase() === cookieCountry.toLowerCase()) || countriesList[0];
+      }
+
+      // Fallback to API
+      const response = await fetch('/api/geolocation');
+      const countryName = await response.json();
+      return countriesList.find(c => c.name.toLowerCase() === countryName?.toLowerCase()) || countriesList[0];
+    } catch {
+      return countriesList[0];
+    }
+  };
+
   useEffect(() => {
     const loadCountries = async () => {
+      setIsLoading(true)
       try {
+        // Format countries data
         const formattedCountries = countriesData.map(country => ({
           code: country.countryCode ?? '',
           name: country.name,
           woeid: country.woeid,
           country: country.country
-        }));
-        setCountries(formattedCountries); // Always load countries first
+        }))
+        setCountries(formattedCountries)
 
-        // Now check sessionStorage
-        const savedCountry = sessionStorage.getItem("country");
-        if (savedCountry) {
-          try {
-            const parsedCountry = JSON.parse(savedCountry);
-            // Validate the saved country exists in our data
-            const isValid = formattedCountries.some(c => c.woeid === parsedCountry.woeid);
-            setSelectedCountry(isValid ? parsedCountry : formattedCountries[0]);
-          } catch {
-            setSelectedCountry(formattedCountries[0]);
-          }
-        } else {
-          // Only detect location if no saved country
-          await detectUserLocation(formattedCountries);
-        }
+        // Detect location and set selected country
+        const detectedCountry = await detectUserLocation(formattedCountries)
+        setSelectedCountry(detectedCountry)
+        sessionStorage.setItem("country", JSON.stringify(detectedCountry))
+
       } catch (error) {
-        console.error('Failed to load countries:', error);
+        console.error('Failed to load countries:', error)
       } finally {
-        setIsLoading(false);
+        setIsLoading(false)
       }
-    };
+    }
 
-    const detectUserLocation = async (countriesList: Country[]) => {
-      try {
-        const resp = await fetch("https://ipapi.co/json/");
-        const data = await resp.json();
-        const userCountryName = data.country_name;
-
-        const matchedCountry = countriesList.find(c =>
-          c.name.toLowerCase() === userCountryName.toLowerCase()
-        );
-
-        setSelectedCountry(matchedCountry || countriesList[0]);
-        sessionStorage.setItem("country", JSON.stringify(matchedCountry || countriesList[0]));
-      } catch (error) {
-        console.error('Location detection failed:', error);
-        setSelectedCountry(countriesList[0]);
-      }
-    };
-
-    setIsLoading(true);
-    loadCountries();
-  }, []);
+    loadCountries()
+  }, [])
 
   // Click outside handler
   useEffect(() => {
@@ -93,26 +143,21 @@ export default function CountrySearch() {
     }
   }, [isOpen])
 
-  // Update your filteredCountries logic to:
+  // Filter and sort countries
   const filteredCountries = countries
     .filter(country =>
       country.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       country.country.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .sort((a, b) => {
-      // Ensure "Worldwide" is always on top if no search term is entered
       if (!searchTerm) {
-        if (a.name === "Worldwide") return -1;
-        if (b.name === "Worldwide") return 1;
+        if (a.name === "Worldwide") return -1
+        if (b.name === "Worldwide") return 1
       }
-
-      // Prioritize countries over cities
-      if (a.name === a.country && b.name !== b.country) return -1;
-      if (a.name !== a.country && b.name === b.country) return 1;
-
-      // If both are countries or both are cities, sort alphabetically
-      return a.name.localeCompare(b.name);
-    });
+      if (a.name === a.country && b.name !== b.country) return -1
+      if (a.name !== a.country && b.name === b.country) return 1
+      return a.name.localeCompare(b.name)
+    })
 
   return (
     <>
@@ -122,27 +167,28 @@ export default function CountrySearch() {
       </Head>
 
       <div className="relative">
-        {/* Country Selector Button - Shows selected city/region name */}
         <button
           onClick={() => setIsOpen(true)}
           className={`
-          flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 md:py-2 
-          rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 
-          transition-colors border-2 border-blue-300 dark:border-blue-700
-          ${isLoading ? 'opacity-70' : ''}
-        `}
+            flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 md:py-2 
+            rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 
+            transition-colors border-2 border-blue-300 dark:border-blue-700
+            ${isLoading ? 'opacity-70' : ''}
+          `}
           disabled={isLoading}
         >
           {isLoading ? (
             <span className="text-xs md:text-sm text-gray-500 dark:text-gray-400">Loading...</span>
           ) : (
             <>
-              {selectedCountry?.name !== "Worldwide" ? (<div
-                className="w-5 h-3.5 md:w-6 md:h-4 rounded bg-cover"
-                style={{
-                  backgroundImage: `url(https://flagcdn.com/24x18/${selectedCountry?.code?.toLowerCase()}.png)`
-                }}
-              ></div>) : null}
+              {selectedCountry?.name !== "Worldwide" && (
+                <div
+                  className="w-5 h-3.5 md:w-6 md:h-4 rounded bg-cover"
+                  style={{
+                    backgroundImage: `url(https://flagcdn.com/24x18/${selectedCountry?.code?.toLowerCase()}.png)`
+                  }}
+                />
+              )}
               <span className="font-medium text-xs md:text-sm text-gray-900 dark:text-gray-100">
                 {selectedCountry?.name || 'Select'}
               </span>
@@ -151,14 +197,12 @@ export default function CountrySearch() {
           )}
         </button>
 
-        {/* Modal */}
         {isOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
             <div
               ref={modalRef}
               className="bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-md max-h-[80vh] overflow-hidden border-2 border-blue-300 dark:border-blue-700"
             >
-              {/* Modal Header */}
               <div className="p-3 md:p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center">
                 <h3 className="font-bold text-base md:text-lg text-gray-900 dark:text-gray-100">
                   Select Location
@@ -171,7 +215,6 @@ export default function CountrySearch() {
                 </button>
               </div>
 
-              {/* Search Input */}
               <div className="p-3 md:p-4 border-b border-gray-200 dark:border-gray-800">
                 <div className="relative">
                   <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -185,7 +228,6 @@ export default function CountrySearch() {
                 </div>
               </div>
 
-              {/* Location List */}
               <div className="overflow-y-auto max-h-[60vh]">
                 {filteredCountries.length > 0 ? (
                   <ul>
@@ -193,15 +235,11 @@ export default function CountrySearch() {
                       <li key={country.woeid}>
                         <button
                           className={`
-                          w-full text-left px-3 md:px-4 py-2 md:py-3 text-sm md:text-base
-                          hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors 
-                          ${selectedCountry?.woeid === country.woeid ? 'bg-indigo-50 dark:bg-indigo-900/30' : ''}
-                        `}
-                          onClick={() => {
-                            setSelectedCountry(country)
-                            setIsOpen(false)
-                            setSearchTerm('')
-                          }}
+                            w-full text-left px-3 md:px-4 py-2 md:py-3 text-sm md:text-base
+                            hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors 
+                            ${selectedCountry?.woeid === country.woeid ? 'bg-indigo-50 dark:bg-indigo-900/30' : ''}
+                          `}
+                          onClick={() => handleSelect(country)}
                         >
                           <div className="flex items-center gap-2 md:gap-3">
                             <div
@@ -209,7 +247,7 @@ export default function CountrySearch() {
                               style={{
                                 backgroundImage: `url(https://flagcdn.com/24x18/${country.code?.toLowerCase()}.png)`
                               }}
-                            ></div>
+                            />
                             <div className="flex flex-col">
                               <span className="text-gray-900 dark:text-gray-100">{country.name}</span>
                               <span className="text-xs text-gray-500 dark:text-gray-400">

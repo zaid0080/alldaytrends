@@ -5,7 +5,7 @@ import { ThemeProvider } from '@/context/ThemeContext'
 import './globals.css'
 import Header from './components/Header'
 import Footer from './components/Footer'
-import FeedbackButton from '@/components/FeedbackButton' // Add this import
+import FeedbackButton from '@/components/FeedbackButton'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -55,15 +55,15 @@ export default function RootLayout({
         <meta name="theme-color" content="#f9fafb" media="(prefers-color-scheme: light)" />
         <meta name="theme-color" content="#111827" media="(prefers-color-scheme: dark)" />
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.className} flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900`}>
         <ThemeProvider>
           <Header />
-          <main className="mt-16">
+          <main className="flex-grow mt-16">
             {children}
             <SpeedInsights />
           </main>
           <Footer />
-          <FeedbackButton /> {/* Add this component here */}
+          <FeedbackButton />
         </ThemeProvider>
       </body>
     </html>
